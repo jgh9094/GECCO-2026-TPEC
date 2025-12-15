@@ -1,0 +1,11 @@
+# Compress Raw OpenML Suite data
+echo "Compressing Raw_OpenML_Suite_271_Binary_Classification..."
+tar -czf raw_openml_suite_271_binary_classification.tar.gz Raw_OpenML_Suite_271_Binary_Classification/
+echo "Created: raw_openml_suite_271_binary_classification.tar.gz"
+
+# Compress RF Timing Splits data
+echo "Compressing RF_Timing_Splits..."
+tar -czf timing_splits.tar.gz Timing_Splits/
+echo "Created: timing_splits.tar.gz"
+
+echo "Compression complete!"
