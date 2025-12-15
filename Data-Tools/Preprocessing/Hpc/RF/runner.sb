@@ -3,6 +3,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --mem=5G
 #SBATCH --cpus-per-task=12
+#SBATCH --array=0-339
 #SBATCH --job-name=RF_timing
 #SBATCH -p moore,defq
 #SBATCH --exclude=esplhpc-cp040
