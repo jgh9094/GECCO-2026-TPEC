@@ -23,10 +23,21 @@ TASK_IDS=(190412 146818 359955 168757 359956 359958 359962 190137 168911 190392 
 # Number of replicates per task
 NUM_REPLICATES=10
 
+# Check if SLURM_ARRAY_TASK_ID is set (if running locally for testing, use 0)
+if [ -z "${SLURM_ARRAY_TASK_ID}" ]; then
+    SLURM_ARRAY_TASK_ID=0
+fi
+
 # Calculate task_id and replicate from SLURM_ARRAY_TASK_ID
 TASK_INDEX=$((SLURM_ARRAY_TASK_ID / NUM_REPLICATES))
 REP=$((SLURM_ARRAY_TASK_ID % NUM_REPLICATES))
 TASK_ID=${TASK_IDS[$TASK_INDEX]}
+
+# Verify TASK_ID was set correctly
+if [ -z "${TASK_ID}" ]; then
+    echo "ERROR: TASK_ID is empty! TASK_INDEX=${TASK_INDEX}, SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID}"
+    exit 1
+fi
 
 # Set paths (adjust these to your actual paths)
 BASE_DIR="/home/hernandezj45/Repos/GECCO-2026-TPEC"
