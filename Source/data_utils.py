@@ -218,9 +218,9 @@ def create_train_test_stratified_splits(
     return train_indices, test_indices
 
 @typechecked
-def train_test_random_forrest(X_train: pd.DataFrame,
+def train_test_random_forrest(X_train: np.ndarray,
                               y_train: np.ndarray,
-                              X_test: pd.DataFrame,
+                              X_test: np.ndarray,
                               y_test: np.ndarray,
                               model_params: Dict[str, Any],
                               random_state: int) -> Tuple[float, float]:
@@ -229,12 +229,12 @@ def train_test_random_forrest(X_train: pd.DataFrame,
 
     Parameters:
     -----------
-    X_train : pd.DataFrame
-        Training features
+    X_train : np.ndarray
+        Training features (preprocessed)
     y_train : np.ndarray
         Training labels
-    X_test : pd.DataFrame
-        Testing features
+    X_test : np.ndarray
+        Testing features (preprocessed)
     y_test : np.ndarray
         Testing labels
     n_estimators : int
@@ -431,3 +431,68 @@ def cv_data_splitter(
     y_val_cv_ref = ray.put(y_val_cv)
 
     return X_train_cv_ref, X_val_cv_ref, y_train_cv_ref, y_val_cv_ref
+
+@typechecked
+def preprocess_train_test(
+    X_train: pd.DataFrame,
+    y_train: np.ndarray,
+    X_test: pd.DataFrame,
+    y_test: np.ndarray,
+    task_id: int,
+    data_dir: str
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Apply preprocessing (StandardScaler + OneHotEncoder) to training and testing data.
+
+    This function loads the categorical indicator, fits preprocessing on training data,
+    and transforms both training and testing sets.
+
+    Parameters:
+    -----------
+    X_train : pd.DataFrame
+        Training features
+    y_train : np.ndarray
+        Training labels
+    X_test : pd.DataFrame
+        Testing features
+    y_test : np.ndarray
+        Testing labels
+    task_id : int
+        The OpenML task ID (used to load categorical features)
+    data_dir : str
+        Directory containing task CSV files and categorical indicator pickle files
+
+    Returns:
+    --------
+    X_train_transformed : np.ndarray
+        Preprocessed training features
+    y_train : np.ndarray
+        Training labels (unchanged)
+    X_test_transformed : np.ndarray
+        Preprocessed testing features
+    y_test : np.ndarray
+        Testing labels (unchanged)
+    """
+    # Load the categorical indicator from the saved pickle file
+    categorical_indicator_path = os.path.join(data_dir, f"task_{task_id}_categorical_indicator.pkl")
+    with open(categorical_indicator_path, 'rb') as f:
+        categorical_indicator = pickle.load(f)
+
+    # Identify categorical and numerical columns
+    categorical_cols = [col for col, is_cat in zip(X_train.columns, categorical_indicator) if is_cat]
+    numerical_cols = [col for col, is_cat in zip(X_train.columns, categorical_indicator) if not is_cat]
+
+    # Create preprocessing pipeline
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', StandardScaler(), numerical_cols),
+            ('cat', OneHotEncoder(drop=None, sparse_output=False, handle_unknown='ignore'), categorical_cols)
+        ],
+        remainder='passthrough'
+    )
+
+    # Fit on training data and transform both train and test
+    X_train_transformed = preprocessor.fit_transform(X_train)
+    X_test_transformed = preprocessor.transform(X_test)
+
+    return X_train_transformed, y_train, X_test_transformed, y_test

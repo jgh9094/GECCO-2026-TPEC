@@ -14,7 +14,7 @@ import json
 
 # Add Source directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from Source.data_utils import load_data, get_ray_cv_splits
+from Source.data_utils import load_data, get_ray_cv_splits, preprocess_train_test
 from Source.eval_utils import MODEL_CONFIG
 
 
@@ -255,14 +255,25 @@ def main():
     # find the best model based on greatest mean_val_accuracy
     best_model_id = max(all_config_results, key=lambda mid: all_config_results[mid]['mean_val_accuracy'])
 
-    # train the best_model on the full training data and evaluate on test data
-    print(f"\nTraining best model ID {best_model_id} on full training data...", flush=True)
-    best_model_params = all_config_results[best_model_id]['parameters']
-    train, test, error = model_config['eval_func'](
+    # Preprocess train and test data before final evaluation
+    print(f"\nPreprocessing training and testing data...", flush=True)
+    X_train_preprocessed, y_train_preprocessed, X_test_preprocessed, y_test_preprocessed = preprocess_train_test(
         X_train=X_train,
         y_train=y_train,
         X_test=X_test,
         y_test=y_test,
+        task_id=args.task_id,
+        data_dir=args.data_directory
+    )
+
+    # train the best_model on the full training data and evaluate on test data
+    print(f"Training best model ID {best_model_id} on full training data...", flush=True)
+    best_model_params = all_config_results[best_model_id]['parameters']
+    train, test, error = model_config['eval_func'](
+        X_train=X_train_preprocessed,
+        y_train=y_train_preprocessed,
+        X_test=X_test_preprocessed,
+        y_test=y_test_preprocessed,
         model_params=best_model_params,
         random_state=args.seed
     )
