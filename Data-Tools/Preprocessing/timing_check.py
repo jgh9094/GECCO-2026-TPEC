@@ -136,6 +136,8 @@ def main():
     print(f"Generated {len(all_params)} parameter configurations.\n", flush=True)
 
     # Process all folds
+    print(f"Preparing cross-validation splits...", flush=True)
+    processing_data_start_time = time()
     X_train_f0, X_val_f0, y_train_f0, y_val_f0, \
     X_train_f1, X_val_f1, y_train_f1, y_val_f1, \
     X_train_f2, X_val_f2, y_train_f2, y_val_f2, \
@@ -145,6 +147,7 @@ def main():
                                                                     y_train=y_train,
                                                                     task_id=args.task_id,
                                                                     data_dir=args.data_directory)
+    print(f"Prepared cross-validation splits in {(time() - processing_data_start_time) / 60:.2f} minutes.\n", flush=True)
 
     # Get the appropriate Ray training function
     train_func = model_config['ray_train_func']
@@ -159,7 +162,6 @@ def main():
         batch_start_id = batch_idx * args.batch_size
         batch_end_id = batch_start_id + args.batch_size
         batch_params = all_params[batch_start_id:batch_end_id]
-        time_limit_broken = False
 
         print(f"Processing batch {batch_idx + 1}/{num_batches} (Models {batch_start_id} to {batch_end_id - 1})...", flush=True)
 
