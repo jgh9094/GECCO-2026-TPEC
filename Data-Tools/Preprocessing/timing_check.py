@@ -185,8 +185,8 @@ def main():
             model_id, train_acc, val_acc, error = result
             assert error >= 0.0, f"Error occurred during training for model ID {model_id}"
 
-            # check if time limit exceeded an hour
-            if time() - start_time_all > 3600:
+            # check if time limit exceeded 2 hours
+            if time() - start_time_all > 7200:
                 print("Time limit exceeded for this batch. Moving to next batch.", flush=True)
                 time_limit_broken = True
                 break
