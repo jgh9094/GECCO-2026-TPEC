@@ -23,9 +23,9 @@ from Source.ray_utils import (
 
 @typechecked
 def train_test_random_forest(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
@@ -69,9 +69,9 @@ def train_test_random_forest(
 
 @typechecked
 def train_test_linear_svc(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
@@ -115,9 +115,9 @@ def train_test_linear_svc(
 
 @typechecked
 def train_test_decision_tree(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
@@ -161,9 +161,9 @@ def train_test_decision_tree(
 
 @typechecked
 def train_test_kernel_svc(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
@@ -207,9 +207,9 @@ def train_test_kernel_svc(
 
 @typechecked
 def train_test_extra_trees(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
@@ -253,9 +253,9 @@ def train_test_extra_trees(
 
 @typechecked
 def train_test_gradient_boost(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
@@ -299,9 +299,9 @@ def train_test_gradient_boost(
 
 @typechecked
 def train_test_linear_sgd(
-    X_train: pd.DataFrame,
+    X_train: np.ndarray,
     y_train: np.ndarray,
-    X_test: pd.DataFrame,
+    X_test: np.ndarray,
     y_test: np.ndarray,
     model_params: Dict[str, Any],
     random_state: int
