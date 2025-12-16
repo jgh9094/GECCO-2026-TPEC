@@ -9,9 +9,10 @@ import os
 import csv
 import argparse
 import sys
+import pickle
 from openml import tasks
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Source'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 from Source.data_utils import load_task_dataset, is_binary_classification_task, get_suite_task_ids
 
 def main():
@@ -59,14 +60,25 @@ def main():
 
             n_rows, n_cols = df.shape
 
-            # 4. Save the entire dataset to CSV
+            # 4. Get and save the categorical indicator
+            dataset = task.get_dataset()
+            _, _, categorical_indicator, _ = dataset.get_data(
+                target=target_name,
+                dataset_format="dataframe"
+            )
+            categorical_indicator_path = os.path.join(output_dir, f"task_{task_id}_categorical_indicator.pkl")
+            with open(categorical_indicator_path, 'wb') as f:
+                pickle.dump(categorical_indicator, f)
+
+            # 5. Save the entire dataset to CSV
             dataset_csv_path = os.path.join(output_dir, f"task_{task_id}.csv")
             df.to_csv(dataset_csv_path, index=False)
 
             print(f"  -> Saved dataset to {dataset_csv_path}")
+            print(f"  -> Saved categorical indicator to {categorical_indicator_path}")
             print(f"  -> Rows: {n_rows}, Columns: {n_cols}, Minority: {minority_pct:.2f}%, Majority: {majority_pct:.2f}%")
 
-            # 5. Append summary info
+            # 6. Append summary info
             summary_rows.append({
                 "task_id": task_id,
                 "rows": n_rows,
@@ -79,10 +91,10 @@ def main():
             # If anything goes wrong for this task, print and continue
             print(f"Error processing task {task_id}: {e}")
 
-    # 6. Sort summary rows by number of rows
+    # 7. Sort summary rows by number of rows
     summary_rows.sort(key=lambda x: x["rows"])
 
-    # 7. Save the summary CSV for all retained binary classification tasks
+    # 8. Save the summary CSV for all retained binary classification tasks
     summary_csv_path = os.path.join(output_dir, "tasks_summary.csv")
     with open(summary_csv_path, mode="w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["task_id", "rows", "columns", "minority_class_pct", "majority_class_pct"])

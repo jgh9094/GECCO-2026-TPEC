@@ -13,7 +13,7 @@ from openml import tasks
 from openml.study import get_suite
 
 @typechecked
-def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, task_id: int):
+def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, task_id: int, data_dir: str):
     """
     Generate CV split file paths for a given replicate directory.
     Load them into ray and return the object references.
@@ -31,6 +31,9 @@ def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, 
     task_id : int
         The OpenML task ID (used to determine categorical features)
 
+    data_dir : str
+        Directory containing task CSV files and categorical indicator pickle files
+
     Returns:
     Tuple of ray.ObjectRef:
         References to X_train, X_validate, y_train, y_validate for each fold
@@ -42,7 +45,8 @@ def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, 
         y_train=y_train,
         fold_train_path=os.path.join(rep_dir, f"fold_train_{0}.pkl"),
         fold_validate_path=os.path.join(rep_dir, f"fold_validate_{0}.pkl"),
-        task_id=task_id)
+        task_id=task_id,
+        data_dir=data_dir)
 
     # CV fold 1 stuff
     X_train_f1, X_val_f1, y_train_f1, y_val_f1 = cv_data_splitter(
@@ -50,7 +54,8 @@ def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, 
         y_train=y_train,
         fold_train_path=os.path.join(rep_dir, f"fold_train_{1}.pkl"),
         fold_validate_path=os.path.join(rep_dir, f"fold_validate_{1}.pkl"),
-        task_id=task_id)
+        task_id=task_id,
+        data_dir=data_dir)
 
     # CV fold 2 stuff
     X_train_f2, X_val_f2, y_train_f2, y_val_f2 = cv_data_splitter(
@@ -58,7 +63,8 @@ def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, 
         y_train=y_train,
         fold_train_path=os.path.join(rep_dir, f"fold_train_{2}.pkl"),
         fold_validate_path=os.path.join(rep_dir, f"fold_validate_{2}.pkl"),
-        task_id=task_id)
+        task_id=task_id,
+        data_dir=data_dir)
 
     # CV fold 3 stuff
     X_train_f3, X_val_f3, y_train_f3, y_val_f3 = cv_data_splitter(
@@ -66,7 +72,8 @@ def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, 
         y_train=y_train,
         fold_train_path=os.path.join(rep_dir, f"fold_train_{3}.pkl"),
         fold_validate_path=os.path.join(rep_dir, f"fold_validate_{3}.pkl"),
-        task_id=task_id)
+        task_id=task_id,
+        data_dir=data_dir)
 
     # CV fold 4 stuff
     X_train_f4, X_val_f4, y_train_f4, y_val_f4 = cv_data_splitter(
@@ -74,7 +81,8 @@ def get_ray_cv_splits(rep_dir: str, X_train: pd.DataFrame, y_train: np.ndarray, 
         y_train=y_train,
         fold_train_path=os.path.join(rep_dir, f"fold_train_{4}.pkl"),
         fold_validate_path=os.path.join(rep_dir, f"fold_validate_{4}.pkl"),
-        task_id=task_id)
+        task_id=task_id,
+        data_dir=data_dir)
 
     return X_train_f0, X_val_f0, y_train_f0, y_val_f0, \
            X_train_f1, X_val_f1, y_train_f1, y_val_f1, \
@@ -323,7 +331,8 @@ def cv_data_splitter(
     y_train: np.ndarray,
     fold_train_path: str,
     fold_validate_path: str,
-    task_id: int
+    task_id: int,
+    data_dir: str
 ) -> Tuple[ray.ObjectRef, ray.ObjectRef, ray.ObjectRef, ray.ObjectRef]:
     """
     Create cross-validation training and validation splits with preprocessing.
@@ -346,6 +355,8 @@ def cv_data_splitter(
         (e.g., '/path/to/Replicate_0/fold_validate_0.pkl')
     task_id : int
         The OpenML task ID (used to determine categorical features)
+    data_dir : str
+        Directory containing task CSV files and categorical indicator pickle files
 
     Returns:
     --------
@@ -365,16 +376,10 @@ def cv_data_splitter(
     with open(fold_validate_path, 'rb') as f:
         fold_validate_indices_original = pickle.load(f)
 
-    # Get task information to determine categorical features
-    task = tasks.get_task(task_id)
-    dataset = task.get_dataset()
-    target_name = task.target_name
-
-    # Get feature type information
-    _, _, categorical_indicator, _ = dataset.get_data(
-        target=target_name,
-        dataset_format="dataframe"
-    )
+    # Load the categorical indicator from the saved pickle file
+    categorical_indicator_path = os.path.join(data_dir, f"task_{task_id}_categorical_indicator.pkl")
+    with open(categorical_indicator_path, 'rb') as f:
+        categorical_indicator = pickle.load(f)
 
     # Since X_train was created from the original dataset using train_indices,
     # we need to map the fold indices from original dataset space to X_train index space.

@@ -143,7 +143,8 @@ def main():
     X_train_f4, X_val_f4, y_train_f4, y_val_f4 = get_ray_cv_splits(rep_dir=rep_dir,
                                                                     X_train=X_train,
                                                                     y_train=y_train,
-                                                                    task_id=args.task_id)
+                                                                    task_id=args.task_id,
+                                                                    data_dir=args.data_directory)
 
     # Get the appropriate Ray training function
     train_func = model_config['ray_train_func']
