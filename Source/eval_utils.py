@@ -63,7 +63,8 @@ def train_test_random_forest(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_random_forest: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 @typechecked
@@ -108,7 +109,8 @@ def train_test_linear_svc(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_linear_svc: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 @typechecked
@@ -153,7 +155,8 @@ def train_test_decision_tree(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_decision_tree: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 @typechecked
@@ -198,7 +201,8 @@ def train_test_kernel_svc(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_kernel_svc: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 @typechecked
@@ -243,7 +247,8 @@ def train_test_extra_trees(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_extra_trees: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 @typechecked
@@ -288,7 +293,8 @@ def train_test_gradient_boost(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_gradient_boost: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 @typechecked
@@ -333,7 +339,8 @@ def train_test_linear_sgd(
         train_acc = accuracy_score(y_train, model.predict(X_train))
         test_acc = accuracy_score(y_test, model.predict(X_test))
         return float(train_acc), float(test_acc), 1.0
-    except Exception:
+    except Exception as e:
+        print(f"Error in train_test_linear_sgd: {e}", flush=True)
         return 0.0, 0.0, -1.0
 
 # Model configuration mapping
