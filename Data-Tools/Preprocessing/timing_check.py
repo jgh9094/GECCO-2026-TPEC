@@ -92,7 +92,7 @@ def main():
     NUM_FOLDS = 5
 
     # Initialize Ray
-    ray.init(ignore_reinit_error=True, num_cpus=12, log_to_driver=True)
+    ray.init(ignore_reinit_error=True, num_cpus=12, log_to_driver=True, include_dashboard=False)
 
     print(f"{'='*70}", flush=True)
     print(f"{model_name} Timing Check", flush=True)
