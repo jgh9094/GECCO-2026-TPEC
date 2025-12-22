@@ -8,4 +8,9 @@ echo "Compressing RF_Timing_Splits..."
 tar -czf timing_splits.tar.gz Timing_Splits/
 echo "Created: timing_splits.tar.gz"
 
+# Compress RF Timing Results data
+echo "Compressing RF_Timing_Results..."
+tar -czf timing_results.tar.gz Timing_Results/
+echo "Created: timing_results.tar.gz"
+
 echo "Compression complete!"
