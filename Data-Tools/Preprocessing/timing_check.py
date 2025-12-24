@@ -14,8 +14,8 @@ import json
 
 # Add Source directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from Source.data_utils import load_data, get_ray_cv_splits, preprocess_train_test
-from Source.eval_utils import MODEL_CONFIG
+from Source.Base.data_utils import load_data, get_ray_cv_splits, preprocess_train_test
+from Source.Base.eval_utils import MODEL_CONFIG
 
 
 def main():

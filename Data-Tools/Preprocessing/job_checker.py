@@ -128,12 +128,12 @@ def check_timing_results(timing_results_dir):
     print("-" * 80)
     print(f"Total empty replicate folders found: {empty_count}")
     print("=" * 80)
-    
+
     # Print array IDs per model
     print("\n" + "=" * 80)
     print("Array IDs to Rerun by Model")
     print("=" * 80)
-    
+
     for model_name in [m.replace("_Timing", "") for m in MODEL_FOLDERS]:
         array_ids = model_array_ids[model_name]
         if array_ids:
@@ -146,7 +146,7 @@ def check_timing_results(timing_results_dir):
             print(f"\n{model_name}:")
             print(f"  Count: 0")
             print(f"  All replicates complete!")
-    
+
     print("\n" + "=" * 80)
 
 

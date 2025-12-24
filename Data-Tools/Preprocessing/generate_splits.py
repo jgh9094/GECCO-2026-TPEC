@@ -26,7 +26,7 @@ import sys
 from openml import tasks as openml_tasks
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from Source.data_utils import create_train_test_stratified_splits
+from Source.Base.data_utils import create_train_test_stratified_splits
 
 def main():
     parser = argparse.ArgumentParser(

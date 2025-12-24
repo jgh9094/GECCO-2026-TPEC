@@ -111,7 +111,7 @@ class ModelParams(ABC):
         return rng.choice(choices)
 
     @abstractmethod
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates a given set of hyperparameters in-place.
 
@@ -131,6 +131,13 @@ class ModelParams(ABC):
         Parameters:
             model_params (Dict[str, Any]): The set of hyperparameters to fix.
             rng (np.random.Generator): A NumPy random generator instance.
+        """
+        pass
+
+    @abstractmethod
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
         """
         pass
 
@@ -189,7 +196,7 @@ class RandomForestParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -215,7 +222,7 @@ class RandomForestParams(ModelParams):
 
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -265,6 +272,12 @@ class RandomForestParams(ModelParams):
 
         return model_params_copy
 
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "RF"
+
 @typechecked
 class LinearSVCParams(ModelParams):
     def __init__(self):
@@ -306,7 +319,7 @@ class LinearSVCParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -329,7 +342,7 @@ class LinearSVCParams(ModelParams):
 
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -362,6 +375,12 @@ class LinearSVCParams(ModelParams):
 
         model_params_copy = copy.deepcopy(model_params)
         return model_params_copy
+
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "LSVC"
 
 @typechecked
 class DecisionTreeParams(ModelParams):
@@ -402,7 +421,7 @@ class DecisionTreeParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -425,7 +444,7 @@ class DecisionTreeParams(ModelParams):
 
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -449,6 +468,12 @@ class DecisionTreeParams(ModelParams):
         """
         model_params_copy = copy.deepcopy(model_params)
         return model_params_copy
+
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "DT"
 
 @typechecked
 class KernelSVCParams(ModelParams):
@@ -490,7 +515,7 @@ class KernelSVCParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -513,7 +538,7 @@ class KernelSVCParams(ModelParams):
 
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -537,6 +562,12 @@ class KernelSVCParams(ModelParams):
         """
         model_params_copy = copy.deepcopy(model_params)
         return model_params_copy
+
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "KSVC"
 
 @typechecked
 class ExtraTreesParams(ModelParams):
@@ -579,7 +610,7 @@ class ExtraTreesParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -604,7 +635,7 @@ class ExtraTreesParams(ModelParams):
 
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -654,6 +685,12 @@ class ExtraTreesParams(ModelParams):
 
         return model_params_copy
 
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "ET"
+
 @typechecked
 class GradientBoostParams(ModelParams):
     def __init__(self, classes: int):
@@ -699,7 +736,7 @@ class GradientBoostParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -722,7 +759,7 @@ class GradientBoostParams(ModelParams):
 
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -751,6 +788,12 @@ class GradientBoostParams(ModelParams):
 
         model_params_copy = copy.deepcopy(model_params)
         return model_params_copy
+
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "GB"
 
 @typechecked
 class LinearSGDParams(ModelParams):
@@ -798,7 +841,7 @@ class LinearSGDParams(ModelParams):
         self.variation_fix_parameters(rand_genotype, rng)
         return rand_genotype
 
-    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> None:
+    def mutate_parameters(self, model_params: Dict[str, Any], var: float, mut_rate: float, rng: np.random.Generator) -> Dict[str, Any]:
         """
         Mutates the model parameters (genotype) in-place with a given mutation rate.
         Should be ready for hard evaluation.
@@ -819,7 +862,7 @@ class LinearSGDParams(ModelParams):
                     model_params[name] = self.pick_categorical_parameter(spec['bounds'], rng)
         # Fix parameters in case of mutation errors
         self.variation_fix_parameters(model_params, rng)
-        return
+        return model_params
 
     def variation_fix_parameters(self, model_params: Dict[str, Any], rng: np.random.Generator) -> None:
         """
@@ -844,3 +887,9 @@ class LinearSGDParams(ModelParams):
 
         model_params_copy = copy.deepcopy(model_params)
         return model_params_copy
+
+    def get_model_type(self) -> str:
+        """
+        Returns the model type as a string.
+        """
+        return "LSGD"

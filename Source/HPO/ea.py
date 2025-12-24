@@ -1,0 +1,295 @@
+import numpy as np
+import ray
+from Source.Base.individual import Individual
+from Source.Base.model_param_space import ModelParams
+from typeguard import typechecked
+from typing import List, Tuple, Dict
+import copy as cp
+from Source.Base.tpe import TPE
+from Source.Base.data_utils import load_data, get_ray_cv_splits, preprocess_train_test
+from Source.Base.ea_utils import parent_selection, evaluation_map
+import os
+
+@typechecked
+class EA:
+    """
+    EA Solver for hyperparameter optimization only.
+    """
+    def __init__(self, model_config: Dict, tpe: None | TPE, seed: int) -> None:
+        """
+        Parameters:
+            param_space (ModelParams): Model parameter space object that
+        """
+        # Model parameter space
+        self.param_space = model_config['param_class']
+        # model test evaluation function
+        self.test_eval_func = model_config['test_eval_func']
+        # model training function
+        self.ray_train_func = model_config['ray_train_func']
+
+        # current population
+        self.population: List[Individual] = []
+        # For debugging
+        self.hard_eval_count = 0 # evaluations on the true objective
+        # TPE Surrogate model
+        self.tpe = tpe
+        # current seed
+        self.seed = seed
+        # RNG
+        self.rng = np.random.default_rng(seed)
+        # archive of all individuals evaluated for post diversity analysis
+        self.archive: List[Individual] = []
+        # tpe archive for fitting
+        self.tpe_archive: List[Individual] = []
+        return
+
+    def load_openml_dataset(self, task_id: int, rep: int, data_directory: str, split_directory: str) -> None:
+        """
+        Load dataset from OpenML given task ID and replicate number.
+        Will use the load_data, get_ray_cv_splits, preprocess_train_test functions.
+        Located in ..Source/Base/data_utils.py
+
+        Parameters:
+            task_id (int): OpenML task ID.
+            rep (int): Replicate number.
+            data_directory (str): Directory where datasets are stored.
+            split_directory (str): Directory where splits are stored.
+        """
+
+        # store the task id, replicate, and directories
+        self.task_id = task_id
+        self.rep = rep
+        self.data_directory = data_directory
+        self.split_directory = split_directory
+        # indicies for train/test split for a given task and replicate
+        rep_dir = os.path.join(split_directory, f"task_{task_id}", f"Replicate_{rep}")
+        # load all train/test data
+        self.X_train, self.X_test, self.y_train, self.y_test = load_data(task_id, data_directory, rep_dir)
+        # get all 5-fold cv splits as list of (train_idx, val_idx)
+        # Process all folds
+        print(f"Preparing cross-validation splits...", flush=True)
+        self.X_train_f0, self.X_val_f0, self.y_train_f0, self.y_val_f0, \
+        self.X_train_f1, self.X_val_f1, self.y_train_f1, self.y_val_f1, \
+        self.X_train_f2, self.X_val_f2, self.y_train_f2, self.y_val_f2, \
+        self.X_train_f3, self.X_val_f3, self.y_train_f3, self.y_val_f3, \
+        self.X_train_f4, self.X_val_f4, self.y_train_f4, self.y_val_f4 = get_ray_cv_splits(rep_dir=rep_dir,
+                                                                                           X_train=self.X_train,
+                                                                                           y_train=self.y_train,
+                                                                                           task_id=task_id,
+                                                                                           data_dir=data_directory)
+        return
+
+    def evolve(self,
+               gens: int,
+               pop_size: int,
+               tournament_size: int,
+               mutation_rate: float,
+               mutation_var: float,
+               num_offspring: int) -> None:
+        """
+        Run the default EA with parallelized fitness evaluations using Ray.
+
+        Parameters:
+            gens (int): Number of generations to evolve.
+            pop_size (int): Population size.
+        """
+
+        # Initialize population with random individuals
+        self.population = [Individual(self.param_space.generate_random_parameters(self.rng),self.param_space.get_model_type()) for _ in range(pop_size)]
+
+        # Evaluate initial population with Ray
+        self.population = self.evaluation(self.population)
+
+        # keep track of hard evaluations for debugging
+        self.hard_eval_count += len(self.population)
+
+        # update archive
+        self.update_archive(self.population)
+
+        best_perf = max([ind.get_val_performance() for ind in self.population])
+        print(f"Initial population size: {len(self.population)}", flush=True)
+        print(f"Best performance so far (Gen 0): {best_perf}", flush=True)
+
+        # Start evolution
+        for g in range(gens):
+            # Parent selection with tournament selection
+            parent_ids = parent_selection(self.population, pop_size, self.rng, tournament_size)
+
+            # Generate offspring through mutation
+            offspring = self.generate_offspring(self.population, parent_ids, mutation_rate, mutation_var, num_offspring)
+
+            # Evaluate offspring with Ray and update population
+            self.population = self.evaluation(offspring)
+            self.hard_eval_count += len(offspring)
+
+            # update archive
+            self.update_archive(offspring)
+
+            # Get best performance in current population
+            current_best = max([ind.get_val_performance() for ind in self.population])
+            if current_best > best_perf:
+                best_perf = current_best
+            print(f"Best performance so far (Gen {g+1}): {best_perf}", flush=True)
+
+        # make sure that the archive is the correct size
+        assert len(self.archive) == self.hard_eval_count
+        assert len(self.archive) == gens * pop_size + pop_size
+        print(f"Hard evaluations: {self.hard_eval_count}", flush=True)
+
+        # Iterate through archive to get all set of best performers
+        best_performers = [pos for pos, ind in enumerate(self.archive) if ind.get_val_performance() == best_perf]
+        print(f"Number of best performers in archive: {len(best_performers)}", flush=True)
+
+        # randomly select one of the best performers for final test evaluation
+        best_individual = cp.deepcopy(self.archive[self.rng.choice(best_performers)])
+
+        # fit best individual on full training data and evaluate on test set
+        X_train_transformed, y_train, X_test_transformed, y_test = preprocess_train_test(self.X_train,
+                                                                                         self.y_train,
+                                                                                         self.X_test,
+                                                                                         self.y_test,
+                                                                                         self.task_id,
+                                                                                         self.data_directory)
+        # train final model with evaluation map
+        train, test, error = self.test_eval_func(X_train_transformed, y_train, X_test_transformed,
+                            y_test, best_individual.get_params(),self.seed)
+        assert error > 0.0, "Error during final model train/test evaluation."
+
+        print(f"Final evaluation on test set:", flush=True)
+        print(f"Train Accuracy: {train}", flush=True)
+        print(f"Test Accuracy: {test}", flush=True)
+
+    def evaluation(self, candidates: List[Individual]) -> List[Individual]:
+        """
+        Evaluate a collection of individuals using Ray across 5-fold cross-validation.
+        This method will update each individual's train and validation performance.
+        Can be used for offspring evaluation during evolution or initial population evaluation.
+
+        Parameters:
+            candidates (List[Individual]): List of individuals to evaluate.
+
+        Returns:
+            List[Individual]: The evaluated individuals with updated performance metrics.
+        """
+
+        ray_jobs = []
+        pop_results = {}
+        # load evaluation jobs for all folds for all individuals
+        for i, ind in enumerate(candidates):
+            pop_results[i] = {'train_acc': [], 'val_acc': []}
+            # fold 0
+            ray_jobs.append(self.ray_train_func.remote(self.X_train_f0, self.y_train_f0, self.X_val_f0, self.y_val_f0,
+                                                       ind.get_params(), self.seed, i))
+            # fold 1
+            ray_jobs.append(self.ray_train_func.remote(self.X_train_f1, self.y_train_f1, self.X_val_f1, self.y_val_f1,
+                                                       ind.get_params(), self.seed, i))
+            # fold 2
+            ray_jobs.append(self.ray_train_func.remote(self.X_train_f2, self.y_train_f2, self.X_val_f2, self.y_val_f2,
+                                                       ind.get_params(), self.seed, i))
+            # fold 3
+            ray_jobs.append(self.ray_train_func.remote(self.X_train_f3, self.y_train_f3, self.X_val_f3, self.y_val_f3,
+                                                       ind.get_params(), self.seed, i))
+            # fold 4
+            ray_jobs.append(self.ray_train_func.remote(self.X_train_f4, self.y_train_f4, self.X_val_f4, self.y_val_f4,
+                                                       ind.get_params(), self.seed, i))
+
+        # gather results as they complete
+        while len(ray_jobs) > 0:
+            finished, ray_jobs = ray.wait(ray_jobs)
+            id, t_acc, v_acc, err = ray.get(finished[0])
+            assert err > 0.0, "Error during model training/evaluation."
+            pop_results[id]['train_acc'].append(t_acc)
+            pop_results[id]['val_acc'].append(v_acc)
+
+        # assign performances to individuals
+        for i, ind in enumerate(candidates):
+            assert len(pop_results[i]['train_acc']) == 5
+            assert len(pop_results[i]['val_acc']) == 5
+            ind.set_train_performance(np.mean(pop_results[i]['train_acc']))
+            ind.set_val_performance(np.mean(pop_results[i]['val_acc']))
+
+        return candidates
+
+    def generate_offspring(self,
+                           candidates: List[Individual],
+                           parent_ids: List[int],
+                           mutation_rate: float,
+                           mutation_var: float,
+                           num_offspring: int) -> List[Individual]:
+        """
+        Generate offspring through mutation from selected parents.
+
+        Parameters:
+            candidates (List[Individual]): Candidate set of individuals.
+            parent_ids (List[int]): List of indices of selected parents.
+            mutation_rate (float): Probability of mutating each hyperparameter.
+            mutation_var (float): Variance for Gaussian mutation.
+            num_offspring (int): Number of pseudo-offspring to generate for tpe.
+
+        Returns:
+            List[Individual]: List of offspring individuals.
+        """
+        assert len(parent_ids) == len(candidates), "Number of parent IDs must match number of candidates."
+        assert len(parent_ids) > 0, "At least one parent must be selected."
+
+        # store offspring here
+        offspring = []
+
+        # mutation for no tpe provided means we randomly create new individuals based on candidate
+        if self.tpe is None:
+            for pid in parent_ids:
+                child_params = self.param_space.mutate_parameters(candidates[pid].get_params(),
+                                                                  mutation_var,
+                                                                  mutation_rate,
+                                                                  self.rng)
+                offspring.append(Individual(child_params, self.param_space.get_model_type()))
+
+            assert len(offspring) == len(parent_ids), "Number of offspring must match number of parents."
+            return offspring
+
+        else:
+            # TPE-based mutation
+            assert len(self.tpe_archive) > 0, "TPE archive must have at least one individual for TPE-based mutation"
+            assert len(self.tpe_archive) == len(self.archive), "TPE archive size must match main archive size."
+            # fit tpe model
+            self.tpe.fit(self.tpe_archive, self.param_space, self.rng)
+            for pid in parent_ids:
+                candidate_offspring = []
+                for _ in range(num_offspring):
+                    # mutate parent_params
+                    candidate_offspring.append(self.param_space.mutate_parameters(candidates[pid].get_params(),
+                                                                      mutation_var,
+                                                                      mutation_rate,
+                                                                      self.rng))
+                # get best offspring according to tpe
+                candidate_index = self.tpe.suggest(self.param_space,
+                                                   [self.param_space.tpe_parameters(params) for params in candidate_offspring],
+                                                   self.rng)
+
+                # append offspring recommended by tpe
+                offspring.append(Individual(candidate_offspring[candidate_index], self.param_space.get_model_type()))
+
+            assert len(offspring) == len(parent_ids), "Number of offspring must match number of parents."
+            return offspring
+
+    def update_archive(self, evaluated_individuals: List[Individual]) -> None:
+        """
+        Update the archive with newly evaluated individuals.
+        This archive is used to find the best performing individuals for final test set evaluation.
+        Can also be used for TPE fitting.
+
+        Parameters:
+            evaluated_individuals (List[Individual]): List of newly evaluated individuals.
+        """
+
+        for ind in evaluated_individuals:
+            tpe_ind = Individual(ind.get_params(), ind.model_type)
+            tpe_ind.set_val_performance(ind.get_val_performance())  # TPE minimizes, so invert performance
+            self.archive.append(tpe_ind)
+
+        if self.tpe is not None:
+            for ind in evaluated_individuals:
+                tpe_ind = Individual(self.param_space.tpe_parameters(ind.get_params()), ind.model_type)
+                tpe_ind.set_val_performance(ind.get_val_performance() * -1.0)  # TPE minimizes, so invert performance
+                self.tpe_archive.append(tpe_ind)
+        return

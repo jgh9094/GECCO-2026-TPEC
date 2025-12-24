@@ -13,7 +13,7 @@ import pickle
 from openml import tasks
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from Source.data_utils import load_task_dataset, is_binary_classification_task, get_suite_task_ids
+from Source.Base.data_utils import load_task_dataset, is_binary_classification_task, get_suite_task_ids
 
 def main():
     # Parse command-line arguments
