@@ -18,4 +18,9 @@ echo "Compressing Exp1_Splits..."
 tar --no-xattrs -czf exp1_splits.tar.gz Exp1_Splits/
 echo "Created: exp1_splits.tar.gz"
 
+# Compress TPEC Tuning Results data
+echo "Compressing Exp1_Results..."
+tar --no-xattrs -czf exp1_results.tar.gz Exp1_Results/
+echo "Created: exp1_results.tar.gz"
+
 echo "Compression complete!"

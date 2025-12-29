@@ -18,4 +18,9 @@ echo "Decompressing exp1_splits.tar.gz..."
 tar --exclude='._*' -xzf exp1_splits.tar.gz
 echo "Created: Exp1_Splits/"
 
+# Extract TPEC Tuning Results data
+echo "Decompressing exp1_results.tar.gz..."
+tar --exclude='._*' -xzf exp1_results.tar.gz
+echo "Created: Exp1_Results/"
+
 echo "Compression complete!"
