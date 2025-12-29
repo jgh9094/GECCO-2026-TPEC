@@ -34,6 +34,24 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # print all argument values
+    print("=" * 60)
+    print("Experiment Configuration")
+    print("=" * 60)
+    print(f"Seed: {args.seed}")
+    print(f"Task ID: {args.task_id}")
+    print(f"Data Directory: {args.data_directory}")
+    print(f"Split Directory: {args.split_directory}")
+    print(f"Replicate: {args.rep}")
+    print(f"Tournament Size: {args.tournament_size}")
+    print(f"Mutation Variance: {args.mutation_var}")
+    print(f"Mutation Rate: {args.mutation_rate}")
+    print(f"Generations: {args.gens}")
+    print(f"Population Size: {args.pop_size}")
+    print(f"Output Directory: {args.output_directory}")
+    print("=" * 60)
+    print()
+
     # initialize ray
     if not ray.is_initialized():
         ray.init(num_cpus=12, include_dashboard=False, ignore_reinit_error=True)
