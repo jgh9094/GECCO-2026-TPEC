@@ -332,7 +332,7 @@ class EA:
                                                                       mutation_rate,
                                                                       self.rng))
                 # get best offspring according to tpe
-                candidate_index = self.tpe.suggest(self.param_space,
+                candidate_index = self.tpe.suggest_one(self.param_space,
                                                    [self.param_space.tpe_parameters(params) for params in candidate_offspring],
                                                    self.rng)
 
@@ -353,9 +353,9 @@ class EA:
         """
 
         for ind in evaluated_individuals:
-            tpe_ind = Individual(ind.get_params(), ind.model_type)
-            tpe_ind.set_val_performance(ind.get_val_performance())  # TPE minimizes, so invert performance
-            self.archive.append(tpe_ind)
+            arch_ind = Individual(ind.get_params(), ind.model_type)
+            arch_ind.set_val_performance(ind.get_val_performance())  # TPE minimizes, so invert performance
+            self.archive.append(arch_ind)
 
         if self.tpe is not None:
             for ind in evaluated_individuals:

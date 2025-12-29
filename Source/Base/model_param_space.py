@@ -155,6 +155,11 @@ class ModelParams(ABC):
         """
         pass
 
+    @abstractmethod
+    def eval_parameters(self, model_params: Dict[str, Any]) -> None:
+        """ Fixes a set of parameter returned by TPE for hard evaluation. """
+        pass
+
 @typechecked
 class RandomForestParams(ModelParams):
     def __init__(self):
@@ -271,6 +276,16 @@ class RandomForestParams(ModelParams):
             model_params_copy['max_samples'] = 1.0
 
         return model_params_copy
+
+    def eval_parameters(self, model_params: Dict[str, Any]) -> None:
+        """ Fixes parameters (in-place) that do not align with scikit-learn's requirements. """
+        # make sure if 'bootstrap' is True, 'max_samples' must have a numeric value within bounds
+        if model_params['bootstrap']:
+            assert(self.param_space['max_samples']['bounds'][0] <= model_params['max_samples'] <= self.param_space['max_samples']['bounds'][1])
+        else:
+            # if bootstrap is False, we need to set max_samples to None
+            model_params['max_samples'] = None
+        return
 
     def get_model_type(self) -> str:
         """
@@ -685,6 +700,16 @@ class ExtraTreesParams(ModelParams):
 
         return model_params_copy
 
+    def eval_parameters(self, model_params: Dict[str, Any]) -> None:
+        """ Fixes parameters (in-place) that do not align with scikit-learn's requirements. """
+        # make sure if 'bootstrap' is True, 'max_samples' must have a numeric value within bounds
+        if model_params['bootstrap']:
+            assert(self.param_space['max_samples']['bounds'][0] <= model_params['max_samples'] <= self.param_space['max_samples']['bounds'][1])
+        else:
+            # if bootstrap is False, we need to set max_samples to None
+            model_params['max_samples'] = None
+        return
+
     def get_model_type(self) -> str:
         """
         Returns the model type as a string.
@@ -788,6 +813,12 @@ class GradientBoostParams(ModelParams):
 
         model_params_copy = copy.deepcopy(model_params)
         return model_params_copy
+
+    def eval_parameters(self, model_params: Dict[str, Any]) -> None:
+        """ Fixes parameters (in-place) that do not align with scikit-learn's requirements. """
+        if self.classes > 2 and model_params['loss'] == 'exponential':
+            model_params["loss"] = "log_loss"
+        return
 
     def get_model_type(self) -> str:
         """
