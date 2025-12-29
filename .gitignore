@@ -9,3 +9,5 @@ Source/HPO/__pycache__/
 Source/Base/__pycache__/
 Source/CASH/__pycache__/
 main.py
+Data/Exp1_Splits
+Data/exp1_splits.tar.gz
