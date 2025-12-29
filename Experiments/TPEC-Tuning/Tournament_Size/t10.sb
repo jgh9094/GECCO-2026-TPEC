@@ -4,7 +4,7 @@
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=12
 #SBATCH --array=0-104
-#SBATCH --job-name=e1-t2
+#SBATCH --job-name=e1-t10
 #SBATCH -p moore,defq
 #SBATCH --exclude=esplhpc-cp040
 ###############################################################
@@ -41,7 +41,7 @@ BASE_DIR="/home/hernandezj45/Repos/GECCO-2026-TPEC"
 SCRIPT_PATH="${BASE_DIR}/Experiments/TPEC-Tuning/experiment.py"
 DATA_DIR="${BASE_DIR}/Data/Raw_OpenML_Suite_271_Binary_Classification"
 SPLIT_DIR="${BASE_DIR}/Data/Exp1_Splits"
-OUTPUT_DIR="${BASE_DIR}/Data/Exp1_Results/task_${TASK_ID}/T2/Replicate_${REP}"
+OUTPUT_DIR="${BASE_DIR}/Data/Exp1_Results/task_${TASK_ID}/T10/Replicate_${REP}"
 
 ########## Create Output Directory ##########
 mkdir -p ${OUTPUT_DIR}
@@ -70,5 +70,5 @@ python ${SCRIPT_PATH} \
     --data_directory ${DATA_DIR} \
     --split_directory ${SPLIT_DIR} \
     --rep ${REP} \
-    --tournament_size 2 \
+    --tournament_size 10 \
     --output_directory ${OUTPUT_DIR}
