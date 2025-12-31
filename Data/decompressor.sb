@@ -23,4 +23,9 @@ echo "Decompressing exp1_results.tar.gz..."
 tar --exclude='._*' -xzf exp1_results.tar.gz
 echo "Created: Exp1_Results/"
 
+# Extract TPEC MutP Tuning Splits data
+echo "Decompressing exp1_mutp_splits.tar.gz..."
+tar --exclude='._*' -xzf exp1_mutp_splits.tar.gz
+echo "Created: Exp1_MutP_Splits/"
+
 echo "Compression complete!"
