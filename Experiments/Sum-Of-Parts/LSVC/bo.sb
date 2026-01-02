@@ -4,7 +4,7 @@
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=12
 #SBATCH --array=0-209
-#SBATCH --job-name=LSVC-tpec
+#SBATCH --job-name=LSVC-BO
 #SBATCH -p moore,defq
 #SBATCH --exclude=esplhpc-cp040
 ###############################################################
