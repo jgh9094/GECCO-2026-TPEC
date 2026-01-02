@@ -377,6 +377,20 @@ class LinearSVCParams(ModelParams):
             model_params['penalty'] = 'l2'
             model_params['dual'] = True
 
+    def eval_parameters(self, model_params: Dict[str, Any]) -> None:
+        """
+        Fixes parameters (in-place) that do not align with scikit-learn's requirements.
+        """
+
+        # penalty-'l1' only works with: loss='squared_hinge', dual=False
+        if model_params['penalty'] == 'l1':
+            model_params['loss'] = 'squared_hinge'
+            model_params['dual'] = False
+        # loss='hinge' only works with: penalty='l2', dual=True
+        if  model_params['loss']== 'hinge':
+            model_params['penalty'] = 'l2'
+            model_params['dual'] = True
+
     def tpe_parameters(self, model_params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Returns a deep copy of 'model_params', which are parameters adjusted for the TPE optimizer.
@@ -904,6 +918,8 @@ class LinearSGDParams(ModelParams):
             rng (np.random.Generator): A NumPy random generator instance.
         """
         return
+
+
 
     def tpe_parameters(self, model_params: Dict[str, Any]) -> Dict[str, Any]:
         """
