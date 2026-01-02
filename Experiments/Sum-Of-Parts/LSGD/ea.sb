@@ -4,7 +4,7 @@
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=12
 #SBATCH --array=0-209
-#SBATCH --job-name=RF-tpec
+#SBATCH --job-name=LSGD-ea
 #SBATCH -p moore,defq
 #SBATCH --exclude=esplhpc-cp040
 ###############################################################
@@ -38,10 +38,10 @@ fi
 
 # Set paths (adjust these to your actual paths)
 BASE_DIR="/home/hernandezj45/Repos/GECCO-2026-TPEC"
-SCRIPT_PATH="${BASE_DIR}/Experiments/Sum-Of-Parts/bo_experiment.py"
+SCRIPT_PATH="${BASE_DIR}/Experiments/Sum-Of-Parts/ea_experiment.py"
 DATA_DIR="${BASE_DIR}/Data/Raw_OpenML_Suite_271_Binary_Classification"
 SPLIT_DIR="${BASE_DIR}/Data/Exp2/Splits"
-OUTPUT_DIR="${BASE_DIR}/Data/Exp2/Results/RF/task_${TASK_ID}/BO/Replicate_${REP}"
+OUTPUT_DIR="${BASE_DIR}/Data/Exp2/Results/LSGD/task_${TASK_ID}/EA/Replicate_${REP}"
 SEED=$((REP)) # Offset seed to avoid overlap with other experiments
 
 ########## Create Output Directory ##########
@@ -67,7 +67,8 @@ echo ""
 
 ########## Execute Python Script ##########
 python ${SCRIPT_PATH} \
-    --model_config RF \
+    --model_config LSGD \
+    --optimizer EA \
     --seed ${SEED} \
     --task_id ${TASK_ID} \
     --data_directory ${DATA_DIR} \
