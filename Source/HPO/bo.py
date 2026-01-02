@@ -196,7 +196,7 @@ class BO:
         print(f"Test Accuracy: {test}", flush=True)
 
         # Create output directory structure if it doesn't exist
-        task_output_dir = os.path.join(self.output_directory, f"task_{self.task_id}", f"rep_{self.rep}")
+        task_output_dir = os.path.join(self.output_directory)
         os.makedirs(task_output_dir, exist_ok=True)
 
         # Save best individual results as JSON
