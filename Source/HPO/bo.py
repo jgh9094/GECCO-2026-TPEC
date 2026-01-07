@@ -19,6 +19,7 @@ class BO:
     def __init__(self,
                  model_config: Dict,
                  seed: int,
+                 gamma: float,
                  total_evals: int,
                  top_candidates: int,
                  num_offspring: int,
@@ -52,7 +53,7 @@ class BO:
         self.archive: List[Individual] = [] # archive of evaluated individuals
         self.tpe_archive: List[Individual] = [] # archive for tpe individuals
         self.hard_eval_count = 0 # evaluations on the true objective
-        self.tpe = TPE() # tpe object for tpe-based mutation
+        self.tpe = TPE(gamma=gamma) # tpe object for tpe-based mutation
         self.best_perf = 0.0 # best performance seen so far
 
         # openml dataset loading
