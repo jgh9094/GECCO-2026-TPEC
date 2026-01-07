@@ -19,7 +19,7 @@ class EA:
     """
     def __init__(self,
                  model_config: Dict,
-                 tpe: None | TPE,
+                 tpe_prob: float,
                  seed: int,
                  gens: int,
                  pop_size: int,
@@ -31,7 +31,8 @@ class EA:
                  rep: int,
                  data_dir: str,
                  split_dir: str,
-                 output_dir: str) -> None:
+                 output_dir: str,
+                 gamma: float = 0.0) -> None:
         """
         Parameters:
             param_space (ModelParams): Model parameter space object that
@@ -60,8 +61,9 @@ class EA:
         self.archive: List[Individual] = [] # archive of evaluated individuals
         self.tpe_archive: List[Individual] = [] # archive for tpe individuals
         self.hard_eval_count = 0 # evaluations on the true objective
-        self.tpe = tpe # tpe object for tpe-based mutation, can be None
+        self.tpe = TPE(gamma=gamma) # tpe object for tpe-based mutation, can be None
         self.best_perf = 0.0 # best performance seen so far
+        self.tpe_prob = tpe_prob # probability of using tpe-based selection
 
         # openml dataset loading
 
@@ -307,39 +309,40 @@ class EA:
         # store offspring here
         offspring = []
 
-        # mutation for no tpe provided means we randomly create new individuals based on candidate
-        if self.tpe is None:
-            for pid in parent_ids:
+        # fit tpe model if self.tpe_prob > 0
+        if self.tpe_prob > 0.0:
+            self.tpe.fit(self.tpe_archive, self.param_space, self.rng)
+
+        # go through each parent and generate offspring, roll for tpe or random mutation
+        for pid in parent_ids:
+
+            # tpe-based mutation
+            if self.rng.random() < self.tpe_prob:
+                candidate_offspring = []
+                for _ in range(num_offspring):
+                    # mutate parent_params
+                    candidate_offspring.append(self.param_space.mutate_parameters(candidates[pid].get_params(),
+                                                                        mutation_var,
+                                                                        mutation_rate,
+                                                                        self.rng))
+                # get best offspring according to tpe
+                candidate_index = self.tpe.suggest_one(self.param_space,
+                                                    [self.param_space.tpe_parameters(params) for params in candidate_offspring],
+                                                    self.rng)
+
+                # append offspring recommended by tpe
+                offspring.append(Individual(candidate_offspring[candidate_index], self.param_space.get_model_type()))
+
+            # random mutation
+            else:
                 child_params = self.param_space.mutate_parameters(candidates[pid].get_params(),
                                                                   mutation_var,
                                                                   mutation_rate,
                                                                   self.rng)
                 offspring.append(Individual(child_params, self.param_space.get_model_type()))
 
-            assert len(offspring) == len(parent_ids), "Number of offspring must match number of parents."
-            return offspring
-
-        else:
-            # fit tpe model
-            self.tpe.fit(self.tpe_archive, self.param_space, self.rng)
-            for pid in parent_ids:
-                candidate_offspring = []
-                for _ in range(num_offspring):
-                    # mutate parent_params
-                    candidate_offspring.append(self.param_space.mutate_parameters(candidates[pid].get_params(),
-                                                                      mutation_var,
-                                                                      mutation_rate,
-                                                                      self.rng))
-                # get best offspring according to tpe
-                candidate_index = self.tpe.suggest_one(self.param_space,
-                                                   [self.param_space.tpe_parameters(params) for params in candidate_offspring],
-                                                   self.rng)
-
-                # append offspring recommended by tpe
-                offspring.append(Individual(candidate_offspring[candidate_index], self.param_space.get_model_type()))
-
-            assert len(offspring) == len(parent_ids), "Number of offspring must match number of parents."
-            return offspring
+        assert len(offspring) == len(parent_ids), "Number of offspring must match number of parents."
+        return offspring
 
     def update_archive(self, evaluated_individuals: List[Individual]) -> None:
         """
