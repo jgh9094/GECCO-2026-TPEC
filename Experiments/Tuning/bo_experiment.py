@@ -21,9 +21,9 @@ if __name__ == "__main__":
     # replicate number
     parser.add_argument('--rep', type=int, default=0, help='Replicate number.')
     # total evaluations
-    parser.add_argument('--total_evals', type=int, default=1100, help='Total number of evaluations to perform.')
+    parser.add_argument('--total_evals', type=int, default=500, help='Total number of evaluations to perform.')
     # top candidates
-    parser.add_argument('--top_candidates', type=int, default=100, help='Number of top candidates to retain from sampled TPE set.')
+    parser.add_argument('--top_candidates', type=int, default=50, help='Number of top candidates to retain from sampled TPE set.')
     # number of offspring
     parser.add_argument('--num_offspring', type=int, default=10, help='Number of pseudo offspring to generate per cycle.')
     # output directory
