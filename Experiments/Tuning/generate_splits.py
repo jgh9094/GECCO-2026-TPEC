@@ -86,7 +86,7 @@ def main():
     summary_df = pd.read_csv(summary_csv)
 
     # Filter for tasks where EXP == 1
-    filtered_df = summary_df[summary_df['EXP'] == 1]
+    filtered_df = summary_df[summary_df['EXP'] == 2]
     task_ids = filtered_df['task_id'].tolist()
 
     print(f"Filtered tasks with EXP=1:")
